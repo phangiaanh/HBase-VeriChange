@@ -13,4 +13,8 @@ func main() {
 	generate.GenerateStore()
 
 	verify.VerifyCustomer()
+	generate.GenerateCustomer()
+
+	verify.VerifySalesOrderHeader()
+	generate.GenerateSalesOrderHeader()
 }

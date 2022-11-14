@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	MaximumStore int64
+	MaximumStore    int64
+	MaximumCustomer int64
 )
 
 type SalesPersonDB struct {
@@ -51,6 +52,43 @@ type Customer struct {
 	AccountNumber string `json:"AccountNumber"`
 	rowguid       string `json:"rowguid"`
 	ModifiedDate  string `json:"ModifiedDate"`
+}
+
+type SalesOrderHeaderDB struct {
+	SalesOrderHeaderDB []SalesOrderHeader `json:"SalesOrderHeader"`
+}
+
+type SalesOrderHeader struct {
+	SalesOrderID int64 `json:"SalesOrderID"`
+
+	OrderDate string `json:"OrderDate"`
+	DueDate   string `json:"DueDate"`
+	ShipDate  string `json:"ShipDate"`
+
+	Status          int64 `json:"Status"`
+	OnlineOrderFlag int64 `json:"OnlineOrderFlag"`
+
+	RevisionNumber      int64  `json:"RevisionNumber"`
+	SalesOrderNumber    string `json:"SalesOrderNumber"`
+	PurchaseOrderNumber string `json:"PurchaseOrderNumber"`
+	AccountNumber       string `json:"AccountNumber"`
+
+	CustomerID             int64  `json:"CustomerID"`
+	SalesPersonID          int64  `json:"SalesPersonID"`
+	TerritoryID            int64  `json:"TerritoryID"`
+	BillToAddressID        int64  `json:"BillToAddressID"`
+	ShipToAddressID        int64  `json:"ShipToAddressID"`
+	ShipMethodID           int64  `json:"ShipMethodID"`
+	CreditCardID           int64  `json:"CreditCardID"`
+	CreditCardApprovalCode string `json:"CreditCardApprovalCode"`
+	CurrencyRateID         int64  `json:"CurrencyRateID"`
+
+	SubTotal string `json:"SubTotal"`
+	TaxAmt   string `json:"TaxAmt"`
+	Freight  string `json:"Freight"`
+	TotalDue string `json:"TotalDue"`
+	Comment  string `json:"Comment"`
+	rowguid  string `json:"rowguid"`
 }
 
 func GenerateSalesPerson() {
@@ -123,6 +161,7 @@ func GenerateStore() {
 
 	verify.MaximumStore = j - 1
 	MaximumStore = j - 1
+	fmt.Println(MaximumStore)
 
 	content, err := json.MarshalIndent(res, "", "\t")
 	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
@@ -144,4 +183,70 @@ func GenerateCustomer() {
 		fmt.Println(err)
 	}
 
+	var j int64 = 40000
+	for a := 0; a <= int(MaximumStore)-3000; a++ {
+		k := rand.Intn(15) + 5
+		for b := 1; b <= k; b++ {
+			var newItem Customer
+			newItem.CustomerID = j
+			j = j + 1
+			newItem.StoreID = int64(a + 3000)
+			newItem.PersonID = newItem.StoreID - 1
+			newItem.TerritoryID = int64(rand.Intn(10))
+			newItem.AccountNumber = "Random Account"
+
+			res.CustomerDB = append(res.CustomerDB, newItem)
+		}
+
+	}
+
+	verify.MaximumCustomer = j - 1
+	MaximumCustomer = j - 1
+
+	content, err := json.MarshalIndent(res, "", "\t")
+	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
+	// content, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = ioutil.WriteFile("../HBase-Migration/export_json/Customer.json", content, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func GenerateSalesOrderHeader() {
+	data, _ := ioutil.ReadFile("../HBase-Migration/export_json/SalesOrderHeader.json")
+	var res SalesOrderHeaderDB
+	err := json.Unmarshal(data, &res)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var j int64 = 80000
+	for a := 1; a <= 273; a++ {
+		k := rand.Intn(300) + 1800
+		for b := 1; b <= k; b++ {
+			var newItem SalesOrderHeader
+			newItem.SalesOrderID = j
+			j = j + 1
+			i := rand.Intn(int(MaximumCustomer)-40000) + 40000
+			newItem.CustomerID = int64(i)
+			newItem.SalesPersonID = int64(a)
+
+			res.SalesOrderHeaderDB = append(res.SalesOrderHeaderDB, newItem)
+		}
+
+	}
+
+	content, err := json.MarshalIndent(res, "", "\t")
+	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
+	// content, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesOrderHeader.json", content, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
