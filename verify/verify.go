@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"strconv"
 )
 
 var (
@@ -88,6 +89,16 @@ type SalesOrderHeader struct {
 	TotalDue string `json:"TotalDue"`
 	Comment  string `json:"Comment"`
 	rowguid  string `json:"rowguid"`
+}
+
+type SalesPersonQuotaHistoryDB struct {
+	SalesPersonQuotaHistoryDB []SalesPersonQuotaHistory `json:"SalesPersonQuotaHistory"`
+}
+
+type SalesPersonQuotaHistory struct {
+	BusinessEntityID int64  `json:"BusinessEntityID"`
+	QuotaDate        string `json:"QuotaDate"`
+	SalesQuota       string `json:"SalesQuota"`
 }
 
 func VerifySalesPerson() {
@@ -238,6 +249,49 @@ func VerifySalesOrderHeader() {
 		fmt.Println(err)
 	}
 	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesOrderHeader.json", content, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func VerifySalesPersonQuotaHistory() {
+	data, _ := ioutil.ReadFile("../HBase-Migration/export_json/SalesPersonQuotaHistory.json")
+	var res SalesPersonQuotaHistoryDB
+	err := json.Unmarshal(data, &res)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var saleID int64 = 1234567
+	var month int64 = 1
+	for j, item := range res.SalesPersonQuotaHistoryDB {
+
+		if item.BusinessEntityID != saleID {
+			fmt.Println(item.BusinessEntityID)
+			saleID = item.BusinessEntityID
+			month = 1
+			item.QuotaDate = fmt.Sprintf("2021/%s", strconv.FormatInt(month, 10))
+		} else {
+			month += 1
+			if month > 12 {
+				item.QuotaDate = fmt.Sprintf("2022/%s", strconv.FormatInt(month-12, 10))
+			} else {
+				item.QuotaDate = fmt.Sprintf("2021/%s", strconv.FormatInt(month, 10))
+			}
+		}
+
+		res.SalesPersonQuotaHistoryDB[j] = item
+	}
+
+	// fmt.Println(res)
+
+	content, err := json.MarshalIndent(res, "", "\t")
+	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
+	// content, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesPersonQuotaHistory.json", content, 0777)
 	if err != nil {
 		fmt.Println(err)
 	}

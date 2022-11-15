@@ -6,6 +6,7 @@ import (
 	"hbase-verichange/verify"
 	"io/ioutil"
 	"math/rand"
+	"strconv"
 )
 
 var (
@@ -99,6 +100,16 @@ type SalesOrderHeaderSalesReasonDB struct {
 type SalesOrderHeaderSalesReason struct {
 	SalesOrderID  int64 `json:"SalesOrderID"`
 	SalesReasonID int64 `json:"SalesReasonID"`
+}
+
+type SalesPersonQuotaHistoryDB struct {
+	SalesPersonQuotaHistoryDB []SalesPersonQuotaHistory `json:"SalesPersonQuotaHistory"`
+}
+
+type SalesPersonQuotaHistory struct {
+	BusinessEntityID int64  `json:"BusinessEntityID"`
+	QuotaDate        string `json:"QuotaDate"`
+	SalesQuota       string `json:"SalesQuota"`
 }
 
 func GenerateSalesPerson() {
@@ -286,6 +297,44 @@ func GenerateSalesOrderHeaderSalesReason() {
 		fmt.Println(err)
 	}
 	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesOrderHeaderSalesReason.json", content, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func GenerateSalesPersonQuotaHistory() {
+	data, _ := ioutil.ReadFile("../HBase-Migration/export_json/SalesPersonQuotaHistory.json")
+	var res SalesPersonQuotaHistoryDB
+	err := json.Unmarshal(data, &res)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for a := 1; a <= 273; a++ {
+		k := rand.Intn(18) + 1
+		for b := 1; b <= k; b++ {
+			var newItem SalesPersonQuotaHistory
+			newItem.BusinessEntityID = int64(a)
+			if b > 12 {
+				newItem.QuotaDate = fmt.Sprintf("2022/%s", strconv.FormatInt(int64(b)-12, 10))
+			} else {
+				newItem.QuotaDate = fmt.Sprintf("2021/%s", strconv.FormatInt(int64(b), 10))
+			}
+			k := float64((rand.Intn(900) + 100) * 1000)
+			newItem.SalesQuota = fmt.Sprintf("%.4f", k)
+
+			res.SalesPersonQuotaHistoryDB = append(res.SalesPersonQuotaHistoryDB, newItem)
+		}
+
+	}
+
+	content, err := json.MarshalIndent(res, "", "\t")
+	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
+	// content, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesPersonQuotaHistory.json", content, 0777)
 	if err != nil {
 		fmt.Println(err)
 	}
