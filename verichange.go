@@ -17,4 +17,6 @@ func main() {
 
 	verify.VerifySalesOrderHeader()
 	generate.GenerateSalesOrderHeader()
+
+	generate.GenerateSalesOrderHeaderSalesReason()
 }

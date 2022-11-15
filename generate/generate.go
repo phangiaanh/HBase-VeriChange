@@ -11,6 +11,7 @@ import (
 var (
 	MaximumStore    int64
 	MaximumCustomer int64
+	MaximumSales    int64
 )
 
 type SalesPersonDB struct {
@@ -89,6 +90,15 @@ type SalesOrderHeader struct {
 	TotalDue string `json:"TotalDue"`
 	Comment  string `json:"Comment"`
 	rowguid  string `json:"rowguid"`
+}
+
+type SalesOrderHeaderSalesReasonDB struct {
+	SalesOrderHeaderSalesReason []SalesOrderHeaderSalesReason `json:"SalesOrderHeaderSalesReason"`
+}
+
+type SalesOrderHeaderSalesReason struct {
+	SalesOrderID  int64 `json:"SalesOrderID"`
+	SalesReasonID int64 `json:"SalesReasonID"`
 }
 
 func GenerateSalesPerson() {
@@ -238,6 +248,7 @@ func GenerateSalesOrderHeader() {
 		}
 
 	}
+	MaximumSales = j - 1
 
 	content, err := json.MarshalIndent(res, "", "\t")
 	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
@@ -246,6 +257,35 @@ func GenerateSalesOrderHeader() {
 		fmt.Println(err)
 	}
 	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesOrderHeader.json", content, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func GenerateSalesOrderHeaderSalesReason() {
+	data, _ := ioutil.ReadFile("../HBase-Migration/export_json/SalesOrderHeaderSalesReason.json")
+	var res SalesOrderHeaderSalesReasonDB
+	err := json.Unmarshal(data, &res)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for a := 80000; a <= int(MaximumSales); a++ {
+		var newItem SalesOrderHeaderSalesReason
+		newItem.SalesOrderID = int64(a)
+		newItem.SalesReasonID = int64(rand.Intn(10))
+
+		res.SalesOrderHeaderSalesReason = append(res.SalesOrderHeaderSalesReason, newItem)
+
+	}
+
+	content, err := json.MarshalIndent(res, "", "\t")
+	// _ = ioutil.WriteFile("../HBase-Migration/export_json/SalesPerson.json", file, 0777)
+	// content, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = ioutil.WriteFile("../HBase-Migration/export_json/SalesOrderHeaderSalesReason.json", content, 0777)
 	if err != nil {
 		fmt.Println(err)
 	}
